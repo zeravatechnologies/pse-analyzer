@@ -1,0 +1,18 @@
+{% if kind == 'local_gguf' %}
+  <label>GGUF file (qwen2 instruct)
+    <input name="gguf" list="ggufs" value="{{ e.gguf or '' }}" placeholder="/path/to/model.gguf"></label>
+  <datalist id="ggufs">{% for g in ggufs %}<option value="{{ g }}">{% endfor %}</datalist>
+  <p class="muted small">Works without the internet. Slow on a weaker processor, but nothing leaves the machine.</p>
+{% else %}
+  {% if needs_key %}
+  <label>API key {% if keyurl %}<a class="small" href="{{ keyurl }}" target="_blank" rel="noopener">where to get one</a>{% endif %}
+    <input name="key" type="password" autocomplete="off" placeholder="{{ masked or 'paste the key' }}"></label>
+  {% if env %}<p class="muted small">Or set the environment variable <code>{{ env }}</code>.</p>{% endif %}
+  {% endif %}
+  {% if show_url %}<label>Server address <input name="base_url" value="{{ e.base_url or '' }}" placeholder="https://…/v1"></label>{% endif %}
+  <label>Model
+    <select name="model" id="modelsel">{% if e.model %}<option selected>{{ e.model }}</option>{% endif %}
+      {% if kind == 'anthropic' and not e.model %}<option selected>claude-opus-5</option>{% endif %}</select></label>
+  <button type="button" hx-post="/llm/models" hx-target="#modelsel" hx-include="closest form">Load models from the server</button>
+  {% if kind == 'anthropic' %}<p class="muted small">claude-opus-5 by default; if the safety check refuses the question, the API forwards it to the recommended model on its own.</p>{% endif %}
+{% endif %}

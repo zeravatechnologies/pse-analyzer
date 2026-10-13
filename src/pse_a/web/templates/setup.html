@@ -1,0 +1,13 @@
+<h2>Language model</h2>
+<p class="muted small">Chosen once; it can be changed or skipped. The key is kept only on this machine ({{ key_dir }}, reachable only by you).</p>
+<form hx-post="/llm/save" hx-target="#talk" class="setup">
+  <label>Provider
+    <select name="pid" hx-get="/llm/fields" hx-target="#fields" hx-trigger="change, load" hx-include="this">
+      {% for grp, items in groups %}<optgroup label="{{ grp }}">
+        {% for pid, label in items %}<option value="{{ pid }}" {% if pid == current %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </optgroup>{% endfor %}
+    </select></label>
+  <div id="fields"></div>
+  <div class="row gap"><button>Save</button>
+    <button type="button" hx-post="/llm/skip" hx-target="#talk">Skip for now</button></div>
+</form>

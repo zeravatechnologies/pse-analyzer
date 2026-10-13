@@ -1,0 +1,77 @@
+name: Release builds
+
+# Builds the download files. Run it by hand (Actions tab -> Run workflow) or by pushing a
+# version tag (v0.3.1). Nothing is published from here: the files land as workflow
+# artifacts, and a person attaches them to a release in zeravatechnologies/releases
+# after checking them.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  windows:
+    name: Windows x64 exe + folder zip
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: src/requirements.txt
+      - run: pip install -r src/requirements.txt
+      # pwsh (PowerShell 7), not powershell 5.1: only 7's Compress-Archive writes zip entries
+      # with forward slashes. 5.1 writes backslashes, which unzip, macOS and Python flatten.
+      - run: pwsh -ExecutionPolicy Bypass -File build\windows.ps1
+      - name: Zip sanity (entry names use forward slashes, papers are inside)
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = Get-Item dist\release\*-folder.zip
+          $z = [IO.Compression.ZipFile]::OpenRead($zip.FullName)
+          $bad = $z.Entries | Where-Object { $_.FullName -match '\\' }
+          $names = $z.Entries | ForEach-Object FullName
+          $z.Dispose()
+          if ($bad) { throw "zip entries with backslashes: $($bad.Count)" }
+          foreach ($p in 'PSE-A/README-FIRST.txt','PSE-A/LICENSE.md','PSE-A/NOTICE.txt','PSE-A/THIRD-PARTY-NOTICES.txt','PSE-A/PSE-A.exe') {
+            if ($names -notcontains $p) { throw "missing in zip: $p" }
+          }
+          Write-Host "zip ok: $($names.Count) entries"
+      - name: Smoke test, the frozen programs answer and pass their own selftest
+        shell: pwsh
+        run: |
+          $v = & dist\PSE-A-single.exe --version
+          Write-Host "single file says: $v"
+          if ($v -notmatch 'PSE Analyzer') { throw "unexpected --version output" }
+          & dist\PSE-A\PSE-A.exe selftest
+          if ($LASTEXITCODE -ne 0) { throw "selftest failed in the folder build" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pse-analyzer-windows
+          path: dist/release/
+          if-no-files-found: error
+
+  ubuntu:
+    name: Ubuntu deb (Architecture all)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends fakeroot dpkg-dev python3-venv
+      - run: bash build/ubuntu.sh
+      - name: Package sanity
+        run: |
+          dpkg-deb --info dist/release/*.deb
+          dpkg-deb --contents dist/release/*.deb | grep -E "usr/bin/pse-a|pse_a/cli.py|requirements.txt|pse-a.desktop"
+      - name: Install it and run it, as a user would (first run builds the venv)
+        run: |
+          sudo apt-get install -y ./dist/release/*.deb
+          pse-a --version
+          pse-a selftest
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pse-analyzer-ubuntu
+          path: dist/release/
+          if-no-files-found: error

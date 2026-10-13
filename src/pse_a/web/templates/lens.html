@@ -1,0 +1,22 @@
+<header class="whead">
+  <h2>Thought by layer (logit lens)</h2>
+  <p class="muted small">{{ rep.model }} · in every cell: the word the model would utter if it had to speak at that layer; color = confidence.</p>
+  <p class="warn small">This is a cheap approximation: it reads only what is already sayable and underestimates computation that is not yet in words. The J-space map exists to close that gap.</p>
+</header>
+{% if story %}<section class="card story"><strong>In short</strong>{% for s in story %}<p class="small">{{ s }}</p>{% endfor %}<p class="muted small">The labels in brackets are the beginning of the hash of the artifact the claim comes from.</p></section>{% endif %}
+{% for it in rep["items"] %}
+<details class="card" {% if loop.first %}open{% endif %}>
+  <summary><strong>{{ it.prompt }}</strong> <span class="muted small">→ “{{ it.top[-1][-1][0] }}”, committed at layer {{ it.commit_layer }}</span></summary>
+  <div class="gridwrap"><table class="wf">
+    <thead><tr><th>layer</th>{% for tk in it.tokens %}<th>{{ tk }}</th>{% endfor %}</tr></thead>
+    <tbody>
+    {% for L in it.layers %}{% set li = loop.index0 %}
+      <tr class="{{ 'commit' if L == it.commit_layer else '' }}"><th>{{ L }}</th>
+      {% for pos in range(it.tokens|length) %}{% set p = it.p[li][pos] %}
+        <td style="background:color-mix(in oklab,var(--accent) {{ (p*70)|round|int }}%,transparent)"
+            title="{{ it.top[li][pos]|join(' · ') }}  ({{ '%.2f'|format(p) }})">{{ it.top[li][pos][0] }}</td>
+      {% endfor %}</tr>
+    {% endfor %}
+    </tbody></table></div>
+</details>
+{% endfor %}

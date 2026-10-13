@@ -1,0 +1,32 @@
+<header class="whead">
+  <h2>Mail</h2>
+  <p class="muted small">Whatever the system must not decide on its own arrives here, not as a pop-up window. What has been read stays on record.</p>
+</header>
+<section class="card">
+  <strong>Active units</strong>
+  {% for a in active %}
+    <div class="row small"><span class="tag">{{ {'l1_sweep':'spectrum','qdiff':'comparison','l2_lens':'lens','l3_sae':'dictionary','l4_jspace':'J-space'}.get(a.kind, a.kind) }}</span>
+      <span>{{ a.model }}</span><span class="muted">{{ a.step }}/{{ a.total }} · {{ a.label }}</span>
+      <svg viewBox="0 0 36 36" width="22" height="22" aria-label="remaining budget"><circle cx="18" cy="18" r="15" class="ring"/>
+        <circle cx="18" cy="18" r="15" class="ringv" stroke-dasharray="{{ (94.2 * (1 - a.step/a.total))|round(1) }} 94.2" transform="rotate(-90 18 18)"/></svg>
+    </div>
+  {% else %}<p class="muted small">No active units.</p>{% endfor %}
+</section>
+{% for it in items %}
+<section class="card {{ 'seen' if it.seen else '' }}">
+  {# kind is stored in the inbox table, so it is mapped for display only -- #}
+  {# renaming the stored value would split old rows from new ones. #}
+  <div class="row"><span class="tag">{{ {'prognoza':'prognosis'}.get(it.kind, it.kind) }}</span><span class="muted small">{{ it.model }} · {{ pg.run_kind_label(it.run_kind) }}</span></div>
+  <p>{{ it.text }}</p>
+  {% if not it.seen %}<form method="post" action="/inbox/{{ it.item_id }}/seen"><button>Mark as read</button></form>{% endif %}
+</section>
+{% else %}
+<p class="muted">The mail is empty.</p>
+{% endfor %}
+{% if deaths %}
+<section class="card">
+  <strong>Runs not accepted into knowledge</strong>
+  <p class="muted small">They are not in the dossiers — a result before the seal is not a result.</p>
+  {% for d in deaths %}<div class="small"><code>{{ d[0] }}</code> · {{ d[1] }}</div>{% endfor %}
+</section>
+{% endif %}

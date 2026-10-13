@@ -1,0 +1,15 @@
+<div class="row"><strong>{{ m.name }}</strong><span class="tag">{{ pg.regime_label(m.regime) }}</span><span class="tag">{{ m.ggml_type }}</span></div>
+{{ chart|safe }}
+<p class="muted small">Logarithmic axis. Red curve: Marchenko-Pastur for the bulk (noise of the same variance), scaled to the bulk's share.</p>
+{% if m.mp_fit_ok is defined and not m.mp_fit_ok %}
+<p class="warn small">The bulk of this matrix is not Marchenko-Pastur (fit {{ fmt(m.mp_ks_n) }}, limit 1.36). The edge and σ² are only a reference point here — not a noise floor, and what lies to the right of the edge is not a “tail” in the strict sense. Alpha is what counts.</p>
+{% elif m.mp_fit_ok is defined %}
+<p class="muted small">The bulk follows MP (fit {{ fmt(m.mp_ks_n) }}, limit 1.36): σ² really is the noise floor, and what lies to the right of the edge is learned structure.</p>
+{% endif %}
+<dl class="kv small">
+  <dt>alpha</dt><dd>{{ fmt(m.alpha) }} {% if isfinite(m.alpha_lo) %}<span class="muted">[{{ fmt(m.alpha_lo) }}, {{ fmt(m.alpha_hi) }}]</span>{% endif %}</dd>
+  <dt>tail above the MP edge</dt><dd>{{ m.n_tail }} ({{ fmt(100*m.tail_frac, 1) }} %)</dd>
+  <dt>σ² {% if m.mp_fit_ok is defined and not m.mp_fit_ok %}(reference point){% else %}(noise floor){% endif %}</dt><dd>{{ '%.3e'|format(m.sigma2) }} <span class="muted">{{ m.sigma_method }}</span></dd>
+  <dt>stable rank</dt><dd>{{ fmt(m.stable_rank, 1) }}</dd>
+  <dt>shape · q</dt><dd>{{ m.shape[0] }}×{{ m.shape[1] }} · {{ fmt(m.q, 3) }}</dd>
+</dl>

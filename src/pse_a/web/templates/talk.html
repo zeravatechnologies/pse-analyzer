@@ -1,0 +1,17 @@
+<h2>Chat</h2>
+{% if not active %}
+  <p class="muted small">The language model is not configured. Results and stories work without it as well.</p>
+  <button hx-get="/llm/setup" hx-target="#talk">Configure a model</button>
+{% else %}
+  <p class="muted small">{{ active_label }}{% if active_model %} · <code>{{ active_model }}</code>{% endif %}
+    · <a href="#" hx-get="/llm/setup" hx-target="#talk">change</a></p>
+  {% if online %}<p class="muted small">Only summaries of sealed results are sent out — not models, weights or activations.</p>{% endif %}
+  <div id="msgs" class="msgs">
+    {% for m in history %}{% include "msg.html" %}{% endfor %}
+  </div>
+  <form id="chatform" class="chatform">
+    <textarea name="text" rows="2" placeholder="Ask about the results…" required></textarea>
+    <button>Send</button>
+  </form>
+  <p id="thinking" class="htmx-indicator muted small">the model is thinking…</p>
+{% endif %}

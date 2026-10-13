@@ -1,0 +1,28 @@
+<header class="whead">
+  <h2>Feature dictionary (layer {{ rep.layer }})</h2>
+  <p class="muted small">{{ rep.model }} · {{ rep.n_features }} features over d_model {{ rep.d_model }} · {{ rep.n_tokens }} positions · corpus: {{ rep.corpus }}</p>
+</header>
+{% if story %}<section class="card story"><strong>In short</strong>{% for s in story %}<p class="small">{{ s }}</p>{% endfor %}<p class="muted small">The labels in brackets are the beginning of the hash of the artifact the claim comes from.</p></section>{% endif %}
+<section class="card">
+  <dl class="kv small">
+    <dt>reconstruction (FVU)</dt><dd>{{ fmt(rep.fvu, 3) }} <span class="muted">accepted ≤ {{ rep.fvu_max }}</span></dd>
+    <dt>active per position (L0)</dt><dd>{{ fmt(rep.l0, 1) }} <span class="muted">range {{ rep.l0_target[0] }}–{{ rep.l0_target[1] }}</span></dd>
+    <dt>dead features</dt><dd>{{ fmt(100*rep.dead_frac, 1) }} %</dd>
+    <dt>effective number of features</dt><dd>{{ fmt(rep.superposition_profile.n_eff, 0) }} of {{ rep.superposition_profile.n_alive }} alive</dd>
+    <dt>stable (share positions with others no more than chance)</dt><dd>{{ rep.superposition_profile.n_stable }}
+      {% if rep.superposition_profile.n_evaluable is defined %}<span class="muted">of {{ rep.superposition_profile.n_evaluable }} that have enough data for a score</span>{% endif %}</dd>
+  </dl>
+  {% if rep.profile == 'dev' %}<p class="warn small">Development profile: little data, the dictionary serves to check the flow, not to interpret features.</p>{% endif %}
+</section>
+<section class="card">
+  <strong>The most frequent features — where they fire strongest</strong>
+  {% for c in rep.cards[:40] %}
+  <details><summary><code>#{{ c.feature }}</code> <span class="muted small">fires on {{ fmt(100*c.freq, 2) }} % of positions{% if c.stable %} · stable{% endif %}</span></summary>
+    {% for e in c.examples %}
+      <div class="small" style="font-family:ui-monospace,monospace;margin:2px 0">
+      {% for t in e.ctx %}{% if loop.index0 == e.at %}<mark>{{ t }}</mark>{% else %}{{ t }}{% endif %}{% endfor %}
+      <span class="muted"> · {{ fmt(e.act, 2) }}</span></div>
+    {% endfor %}
+  </details>
+  {% endfor %}
+</section>

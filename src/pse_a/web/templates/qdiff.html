@@ -1,0 +1,25 @@
+<header class="whead">
+  <h2>Precision comparison</h2>
+  <p class="muted small">{{ rep.ref }} → {{ rep.test }} · the reference is always the higher precision</p>
+</header>
+{% if story %}<section class="card story"><strong>In short</strong>{% for s in story %}<p class="small">{{ s }}</p>{% endfor %}<p class="muted small">The labels in brackets are the beginning of the hash of the artifact the claim comes from.</p></section>{% endif %}
+<section class="card">
+  <strong>How much of the dominant subspace remains, by spectrum depth</strong>
+  <p class="muted small">Averaged over the layers of one role. 1.000 = directions untouched.</p>
+  {{ chart|safe }}
+</section>
+<section class="card">
+  <strong>By role and type pair</strong>
+  <p class="muted small">The comparison runs within a role: in K_M mixtures the scheme is tied to the role, so summing across roles mixes two things.</p>
+  <div class="gridwrap"><table class="plain">
+    <thead><tr><th>role</th><th>types</th><th>n</th><th>kept (m/4)</th><th>noise concentration</th><th>energy change</th><th>noise-floor shift <span class="muted small">(only where MP holds)</span></th><th>alpha shift</th></tr></thead>
+    <tbody>
+    {% for k, v in rep.strata.items() %}{% set p = k.split('|') %}
+      <tr><td>{{ p[0] }}</td><td class="nw"><code>{{ p[1]|replace('->',' → ') }}</code></td><td>{{ v.n }}</td>
+          <td>{{ fmt(v.kept_quarter, 4) }}</td>
+          <td>{{ fmt(v.noise_ratio) }}{% if v.noise_ratio > 1.2 %} <span class="muted small">hits the learned directions</span>{% endif %}</td>
+          <td>{{ fmt(v.energy_change, 3, True) }}</td><td>{{ fmt(v.sigma2_shift, 2, True) }} <span class="muted small">{{ v.mp_ok if v.mp_ok is defined else '?' }}/{{ v.n }}</span></td>
+          <td>{{ fmt(v.alpha_shift) }}</td></tr>
+    {% endfor %}
+    </tbody></table></div>
+</section>

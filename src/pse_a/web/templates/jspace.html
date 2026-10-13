@@ -1,0 +1,32 @@
+<header class="whead">
+  <h2>J-space map</h2>
+  <p class="muted small">{{ m.model }} · {{ m.prompts|length }} deliberately ambiguous prompts · {{ m.probes|length }} probes</p>
+</header>
+{% if story %}<section class="card story"><strong>In short</strong>{% for s in story %}<p class="small">{{ s }}</p>{% endfor %}<p class="muted small">The labels in brackets are the beginning of the hash of the artifact the claim comes from.</p></section>{% endif %}
+<section class="card">
+  {{ chart|safe }}
+  <p class="small">
+  {% if m.regions.ignition is not none %}
+    The model <strong>commits sharply at layer {{ m.regions.ignition }}</strong>: before that it holds several readings, afterwards it picks one.
+  {% else %}
+    {% if m.regions.resolution_ok is defined and not m.regions.resolution_ok %}
+    <span class="warn">No sharp commitment was found, but the map is coarse (every {{ m.regions.stride }} layers).</span> A two-layer jump is invisible at this resolution, so this is not proof that there is none — a decision needs denser sampling.
+    {% else %}
+    <span class="warn">No sharp commitment was found.</span> For this model the three-part structure (sensory part · workspace · output) is not confirmed — that is a finding, not a fault.
+    {% endif %}
+  {% endif %}
+  Shaded band: the expected variance share of the workspace ({{ (100*m.expected_var[0])|round|int }}–{{ (100*m.expected_var[1])|round|int }} %).
+  </p>
+</section>
+<section class="card">
+  <strong>Features the model holds — by layer</strong>
+  <p class="muted small">The largest non-negative J-space coefficients for the last token of the prompt.</p>
+  {% for p in m.prompts %}{% set pi = loop.index0 %}
+  <details><summary>{{ p }}</summary>
+    {% for L in m.layers %}
+      <div class="row small"><span class="muted" style="min-width:52px">layer {{ L }}</span>
+        <span class="chips">{% for w, c in m.chips[L|string][pi] %}<span class="chip" title="{{ '%.3f'|format(c) }}">{{ w }}</span>{% endfor %}</span></div>
+    {% endfor %}
+  </details>
+  {% endfor %}
+</section>
