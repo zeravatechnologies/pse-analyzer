@@ -68,7 +68,13 @@ Icon=applications-science
 Terminal=true
 Categories=Science;Development;
 EOF
-cp docs/*.docx "$STAGE/usr/share/doc/$PKG/"
+# No documents are shipped by default. The papers live in the internal repository,
+# not this one, so docs/ is normally absent here and an unguarded copy would fail
+# the build. If a docs/ folder is present, whatever .docx it holds is included.
+for doc in docs/*.docx; do
+    [ -e "$doc" ] || break
+    cp "$doc" "$STAGE/usr/share/doc/$PKG/"
+done
 if [ -f LICENSE.md ]; then cp LICENSE.md "$STAGE/usr/share/doc/$PKG/LICENSE.md"; fi
 if [ -f NOTICE ]; then cp NOTICE "$STAGE/usr/share/doc/$PKG/NOTICE"; fi
 cat > "$STAGE/usr/share/doc/$PKG/README" <<EOF
